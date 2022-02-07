@@ -33,7 +33,7 @@ def find_t_to_level(x0, direction, foo, level):
 def difference_along_path(x0: np.array, direction: np.array, foo, level):
 
     def f(t):
-        return foo(x0 + t * direction) - level
+        return - foo(x0 + t * direction) + level
 
     return f
 
@@ -50,18 +50,25 @@ if __name__ == "__main__":
 
 
     target_levels = [2, 3]
-    x0 = np.array([0, 1])
+    x0 = np.array([0.1, 5])
     direction = np.array([1, 0])
 
     # t = find_t_to_level(x0, direction, f, 2)
     # print(t)
     # print(x0 + t * direction)
-    jump_points = scatter_between_level_surfaces(x0, f, target_levels)
+    jump_points = scatter_between_level_surfaces(x0, f, target_levels, n_jumps=5)
     print(jump_points)
 
-    # xs = np.linspace(0.1, 20, num=101)
-    # plt.plot(xs, 2 / xs)
-    # plt.plot(xs, 3 / xs)
-    plt.plot([x0[0]] + jump_points[0, :], [x0[1]] + jump_points[1, :])
+    xs = np.linspace(min(jump_points[0, :]), max(jump_points[0, :]), num=101)
+    plt.plot(xs, target_levels[0] / xs)
+    plt.plot(xs, target_levels[1] / xs)
+    plt.grid()
+    plt.plot(jump_points[0, :],jump_points[1, :])
+
+    # plt.loglog(xs, target_levels[0] / xs)
+    # plt.loglog(xs, target_levels[1] / xs)
+    # plt.grid()
+    # plt.loglog(jump_points[0, :],jump_points[1, :])
+
     plt.show()
 
