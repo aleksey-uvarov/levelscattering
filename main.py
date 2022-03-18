@@ -2,6 +2,46 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import optimize
 from matplotlib.patches import Rectangle
+from typing import Callable, Tuple
+from mpl_toolkits.mplot3d import Axes3D
+
+Point3D = Tuple[float, float, float]
+Point2D = Tuple[float, float]
+
+
+def plot_level_scattering_3d(foo: Callable[[Point3D], float], levels,
+                             starting_points: np.array,
+                             starting_direction: np.array = np.array([1, 0, 0]),
+                             n_jumps=4):
+    all_jump_points = np.zeros((starting_points.shape[0], starting_points.shape[1], n_jumps+2))
+    for i in range(starting_points.shape[0]):
+        all_jump_points[i, :, :] = scatter_between_level_surfaces(x0=starting_points[i],
+                                                                  foo=lambda x: foo((x[0], x[1], starting_points[i][2])),
+                                                                  levels=levels,
+                                                                  starting_direction=starting_direction,
+                                                                  n_jumps=n_jumps)
+    print(all_jump_points)
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d')
+    for i in range(starting_points.shape[0]):
+        ax.plot(all_jump_points[i, 0, :], [starting_points[i][2]] * (n_jumps+2), all_jump_points[i, 1, :],
+                color='black')
+    plt.show()
+
+
+def plot_level_scattering(x0: np.array, foo, levels,
+                          starting_direction=np.array([1, 0]),
+                          n_jumps=4):
+    jump_points = scatter_between_level_surfaces(x0, foo, levels, starting_direction, n_jumps)
+    fig, ax = plt.subplots()
+    draw_rectangles_on_axis(jump_points, ax)
+    xs = np.linspace(min(jump_points[0, :]), max(jump_points[0, :]), num=101)
+    plt.scatter(x0[0], x0[1])
+    plt.plot(xs, levels[0] / xs, color='black')
+    plt.plot(xs, levels[1] / xs, color='black')
+    plt.grid()
+    plt.plot(jump_points[0, :], jump_points[1, :], color='red')
+    plt.show()
 
 
 def scatter_between_level_surfaces(x0: np.array, foo, levels,
@@ -87,26 +127,33 @@ def draw_rectangles_on_axis(jump_points, ax):
 
 if __name__ == "__main__":
 
-    def f(x):
-            return x[0] * x[1]
-
+    def f(x: Point2D):
+        return x[0] * x[1]
 
     target_levels = [2, 3]
     x0 = np.array([0.1, 5])
     direction = np.array([1, 0])
 
+    # plot_level_scattering(x0, foo=f, levels=target_levels, n_jumps=5)
+
+    def g(x: Point3D):
+        return x[0] * x[1] * x[2]
+
+    starts = np.array([[0.1, 5, m] for m in np.linspace(1, 2, num=11)])
+    plot_level_scattering_3d(g, target_levels, starts, n_jumps=7)
+
     # t = find_t_to_level(x0, direction, f, 2)
     # print(t)
     # print(x0 + t * direction)
-    the_jump_points = scatter_between_level_surfaces(x0, f, target_levels, n_jumps=5)
-
-    fig, ax = plt.subplots()
-    draw_rectangles_on_axis(the_jump_points, ax)
-    xs = np.linspace(min(the_jump_points[0, :]), max(the_jump_points[0, :]), num=101)
-    plt.scatter(x0[0], x0[1])
-    plt.plot(xs, target_levels[0] / xs, color='black')
-    plt.plot(xs, target_levels[1] / xs, color='black')
-    plt.grid()
-    plt.plot(the_jump_points[0, :], the_jump_points[1, :], color='red')
-    plt.show()
+    # the_jump_points = scatter_between_level_surfaces(x0, f, target_levels, n_jumps=5)
+    #
+    # fig, ax = plt.subplots()
+    # draw_rectangles_on_axis(the_jump_points, ax)
+    # xs = np.linspace(min(the_jump_points[0, :]), max(the_jump_points[0, :]), num=101)
+    # plt.scatter(x0[0], x0[1])
+    # plt.plot(xs, target_levels[0] / xs, color='black')
+    # plt.plot(xs, target_levels[1] / xs, color='black')
+    # plt.grid()
+    # plt.plot(the_jump_points[0, :], the_jump_points[1, :], color='red')
+    # plt.show()
 
